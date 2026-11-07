@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071827">
+  <title>Recent Projects | Northcrest Electrical</title>
+  <link rel="icon" href="northcrest-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Plus Jakarta Sans','sans-serif']},colors:{brand:{dark:'#071827',navy:'#102D45',blue:'#176B9B',accent:'#38BDF8',gold:'#F5B942',card:'#10283B'}}}}}</script>
+  <link rel="stylesheet" href="site.css">
+</head><body><header class="site-nav"><a class="brand" href="index.html"><img src="northcrest-logo.png" alt="Northcrest Electrical Services"><span>Northcrest <small>Electrical Services</small></span></a><nav><a href="index.html">Home</a><a href="projects.html">Recent Projects</a><a href="index.html#services">Services</a><a href="index.html#contact">Contact</a></nav><a class="nav-cta" href="index.html#contact">Get a quote <i class="fa-solid fa-arrow-right"></i></a></header>
+<main class="page-wrap"><div class="max-w-3xl"><div class="eyebrow">Our work in the field</div><h1 class="hero-title">Recent Projects</h1><p class="muted leading-7">A closer look at electrical projects completed by the Northcrest team. Browse our residential, commercial and industrial work.</p></div>
+<div class="filter-row" role="group" aria-label="Filter projects"><button class="filter-btn active" data-filter="all">All projects</button><button class="filter-btn" data-filter="residential">Residential</button><button class="filter-btn" data-filter="commercial">Commercial</button><button class="filter-btn" data-filter="industrial">Industrial</button></div>
+<div id="status" class="muted text-sm mb-5" aria-live="polite">Loading projects…</div><div id="projectGrid" class="project-grid"></div>
+</main><footer class="site-footer">© <span id="year"></span> Northcrest Electrical Services. All rights reserved.</footer>
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Project photograph"><button id="closeLightbox" aria-label="Close">×</button><img id="lightboxImage" alt="Project photograph"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script>
+const client=window.supabaseClient;
+const grid=document.getElementById('projectGrid'),statusEl=document.getElementById('status');let projects=[];let activeFilter='all';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function photoUrl(path){return client.storage.from('project-photos').getPublicUrl(path).data.publicUrl}
+function render(){const shown=projects.filter(p=>activeFilter==='all'||p.category===activeFilter);statusEl.textContent=shown.length?`${shown.length} project${shown.length===1?'':'s'}`:'No projects in this category yet.';grid.innerHTML=shown.map(p=>{{const imgs=(p.image_paths||[]).map(photoUrl);return `<article class="project-card"><div class="project-cover"><img src="${esc(imgs[0]||'')}" alt="${esc(p.title)}" loading="lazy" data-lightbox="${esc(imgs[0]||'')}"></div><div class="project-copy"><div class="tag">${esc(p.category)}</div><h2>${esc(p.title)}</h2><p>${esc(p.description)}</p><div class="location"><i class="fa-solid fa-location-dot"></i> ${esc(p.location||'')}</div></div>${imgs.length>1?`<div class="gallery-thumbs">${imgs.slice(1).map(u=>`<img src="${esc(u)}" alt="More photos of ${esc(p.title)}" loading="lazy" data-lightbox="${esc(u)}">`).join('')}</div>`:''}</article>`}}).join('');}
+async function load(){if(!client){statusEl.textContent='Gallery setup is incomplete. Please configure Supabase.';return}const {data,error}=await client.from('projects').select('id,title,description,category,location,image_paths,created_at').order('created_at',{ascending:false});if(error){statusEl.textContent='We could not load projects right now. Please try again later.';console.error(error);return}projects=data||[];render()}
+document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));activeFilter=b.dataset.filter;render()}));
+grid.addEventListener('click',e=>{const img=e.target.closest('[data-lightbox]');if(!img)return;document.getElementById('lightboxImage').src=img.dataset.lightbox;document.getElementById('lightbox').classList.add('open')});function closeBox(){document.getElementById('lightbox').classList.remove('open')}document.getElementById('closeLightbox').onclick=closeBox;document.getElementById('lightbox').addEventListener('click',e=>{if(e.target.id==='lightbox')closeBox()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeBox()});document.getElementById('year').textContent=new Date().getFullYear();load();
+</script></body></html>
